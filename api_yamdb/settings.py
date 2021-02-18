@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from datetime import timedelta
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,7 +41,10 @@ INSTALLED_APPS = [
     'api',
     'users',
     'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
+    'drfpasswordless',
+
 ]
 
 MIDDLEWARE = [
@@ -127,9 +131,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static/'),)
 
 REST_FRAMEWORK = {
-        'DEFAULT_PERMISSION_CLASSES': [
-            'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-        ],
 
         'DEFAULT_AUTHENTICATION_CLASSES': [
             'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -139,3 +140,20 @@ REST_FRAMEWORK = {
             'django_filters.rest_framework.DjangoFilterBackend'
         ]
     }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+    'TOKEN_REFRESH_LIFETIME': timedelta(days=15),
+}
+
+
+PASSWORDLESS_AUTH = {
+   'PASSWORDLESS_AUTH_TYPES': ['EMAIL',],
+   'PASSWORDLESS_EMAIL_NOREPLY_ADDRESS': 'noreply@example.com',
+}
+
+
+#  подключаем движок filebased.EmailBackend
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# указываем директорию, в которую будут складываться файлы писем
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_email')
