@@ -17,7 +17,8 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        user = self.create_user(email)
+        print(extra_fields)
+        user = self.create_user(email, **extra_fields)
         user.role = 'admin'
         user.save(using=self._db)
         return user
@@ -37,15 +38,15 @@ class User(AbstractBaseUser):
                                         _("username already exists.")})
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=150, blank=True)
-    email = models.EmailField(_('email address'), unique=True)
+    email = models.EmailField(unique=True)
     role = models.TextField(choices=Role.choices, default='user')
     bio = models.TextField(verbose_name='О себе', null=True)
 
     objects = UserManager()
 
     EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
     def __str__(self):
         """ Строковое представление модели (отображается в консоли) """
