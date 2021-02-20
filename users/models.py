@@ -1,19 +1,52 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import BaseUserManager
+from django.utils.translation import gettext_lazy as _
 
 
-class UserProfile(models.Model):
+class UserManager(BaseUserManager):
+    use_in_migrations = True
 
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email обязателен')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        user = self.create_user(email)
+        user.role = 'admin'
+        user.save(using=self._db)
+        return user
+
+
+class User(AbstractBaseUser):
     class Role(models.TextChoices):
-        USER = 'User'
-        MODERATOR = 'Moderator'
-        ADMIN = 'Admin'
-        DJANGO_ADMIN = 'Django_admin'
+        USER = 'user'
+        MODERATOR = 'moderator'
+        ADMIN = 'admin'
+        DJANGO_ADMIN = 'django_admin'
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE,
-                                related_name="profile")
-    description = models.TextField(blank=True, null=True)
-    role = models.TextField(choices=Role.choices, default='User')
+    username = models.CharField(max_length=30, unique=True,
+                                verbose_name='Username',
+                                error_messages={
+                                    'unique':
+                                        _("username already exists.")})
+    first_name = models.CharField(_('first name'), max_length=30, blank=True)
+    last_name = models.CharField(_('last name'), max_length=150, blank=True)
+    email = models.EmailField(_('email address'), unique=True)
+    role = models.TextField(choices=Role.choices, default='user')
+    bio = models.TextField(verbose_name='О себе', null=True)
+
+    objects = UserManager()
+
+    EMAIL_FIELD = 'email'
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
     def __str__(self):
-        return self.user.username
+        """ Строковое представление модели (отображается в консоли) """
+        return self.email
