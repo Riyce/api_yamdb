@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from .models import User
 from django.utils.translation import ugettext_lazy as _
 from drfpasswordless.models import CallbackToken
 from drfpasswordless.serializers import TokenField
@@ -6,10 +6,6 @@ from drfpasswordless.settings import api_settings
 from drfpasswordless.utils import verify_user_alias, validate_token_age
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import UserProfile
-
-User = get_user_model()
-
 
 def token_age_validator(value):
     """
@@ -62,8 +58,7 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
                     msg = _('User account is disabled.')
                     raise serializers.ValidationError(msg)
 
-                if api_settings.PASSWORDLESS_USER_MARK_EMAIL_VERIFIED \
-                        or api_settings.PASSWORDLESS_USER_MARK_MOBILE_VERIFIED:
+                if api_settings.PASSWORDLESS_USER_MARK_EMAIL_VERIFIED:
                     # Mark this alias as verified
                     user = User.objects.get(pk=token.user.pk)
                     success = verify_user_alias(user, token)
@@ -90,10 +85,8 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
-        read_only=True, slug_field='username'
-     )
+    user = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        model = UserProfile
-        fields = '__all__'
+        model = User
+        exclude = ('password',)
