@@ -1,6 +1,4 @@
 from rest_framework import permissions
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework import authentication
 
 
 class IsAuthReadOnly(permissions.BasePermission):
