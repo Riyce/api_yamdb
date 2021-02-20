@@ -85,7 +85,6 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = User
