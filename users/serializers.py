@@ -1,4 +1,3 @@
-from .models import User
 from django.utils.translation import ugettext_lazy as _
 from drfpasswordless.models import CallbackToken
 from drfpasswordless.serializers import TokenField
@@ -6,6 +5,9 @@ from drfpasswordless.settings import api_settings
 from drfpasswordless.utils import verify_user_alias, validate_token_age
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from .models import User
+
 
 def token_age_validator(value):
     """
@@ -48,7 +50,8 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
             user = User.objects.get(**{alias_type + '__iexact': alias})
             token = CallbackToken.objects.get(**{'user': user,
                                                  'key': callback_token,
-                                                 'type': CallbackToken.TOKEN_TYPE_AUTH,
+                                                 'type': CallbackToken.
+                                              TOKEN_TYPE_AUTH,
                                                  'is_active': True})
 
             if token.user == user:
