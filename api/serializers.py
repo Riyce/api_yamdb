@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Genre, Title, Review
+from .models import Category, Genre, Title, Review, Comments
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -41,14 +41,24 @@ class TitleListSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+    def validate(self, data):
+        score = data['score']
+        if score <= 0 or score > 10:
+            raise serializers.ValidationError(
+                'Reiting must be from 1 to 10'
+            )
+        return data
     class Meta:
-        #exclude = ('id',)
         fields = '__all__'
-        model = Review       
+        model = Review     
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField
     class Meta:
-        #exclude = ('id',)
-        fields = '__all__'
-        model = Review  
+        fields = ('id', 'author', 'post', 'text', 'created')
+        model = Comments

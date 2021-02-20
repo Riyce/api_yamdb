@@ -11,7 +11,7 @@ from rest_framework import generics
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleCreateUpdateSerializer, TitleListSerializer,ReviewSerializer, CommentSerializer)
 from django.shortcuts import get_object_or_404
-
+from django.db import IntegrityError
 class ListCreateDestroyViewSet(CreateModelMixin,
                                DestroyModelMixin,
                                ListModelMixin,
@@ -55,26 +55,47 @@ class TitleViewSet(ModelViewSet):
 
 class ReviewViewSet(ModelViewSet):
 
-    queryset = Review.objects.all()
+    #queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
-    
-#def get_queryset(self):
-        #rev = get_object_or_404(Review, id=self.kwargs['review_id'])
- #       return Review.objects.filter(author=request.user, title=data['title']).exists
 
-    #def perform_create(self, serializer):
-        #serializer.save(author=self.request.user)
+    def get_queryset(self):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        return title.reviews
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        try:
+            serializer.save(title=title)
+        except IntegrityError:
+            message = 'Можно оставить только один отзыв на один объект'
+            raise serializer.ValidationError(message)
 
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
     #permission_classes = (IsAuthorOrReadOnly,)
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+
     def get_queryset(self):
+        title = get_object_or_404(
+            Title, 
+            id=self.kwargs.get('title_id')
+        )
         review = get_object_or_404(
-            Reviews, pk=self.kwargs.get('review_id')
+            Review, 
+            id=self.kwargs.get('review_id')
         )
         return review.comments.all()
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(
+            Title, 
+            id=self.kwargs.get('title_id')
+        )
+        review = get_object_or_404(
+            Review, 
+            id=self.kwargs.get('review_id')
+        )
+        serializer.save(review)
+    
