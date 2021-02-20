@@ -2,18 +2,20 @@ from rest_framework import permissions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import authentication
 
-class IsAuthenticatedOrReadOnly(permissions.BasePermission):
-    """
-    The request is authenticated as a user, or is a read-only request.
-    """
+
+class IsAuthReadOnly(permissions.BasePermission):
+
     def has_object_permission(self, request, view, obj):
-        #return True
-        return obj.author == request.user
+        return request.user.is_authenticated
 
     def has_permission(self, request, view):
-        return bool(
-            request.method in permissions.SAFE_METHODS or
-            request.user and
-            request.user.is_authenticated
-        )
+        return request.user.is_authenticated
 
+
+class IsStaffOnly(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_staff()
+
+    def has_permission(self, request, view):
+        return request.user.is_admin()
