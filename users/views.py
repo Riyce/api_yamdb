@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import generics
-from .permissions import IsAuthenticatedOrReadOnly
+from .permissions import IsAuthReadOnly
 
 from .serializers import CallbackTokenAuthSerializer, UserProfileSerializer
 
@@ -72,17 +72,7 @@ class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthReadOnly,)
     queryset = User.objects.all()
     lookup_field = 'username'
 
-    def get_queryset(self):
-        out = User.objects.all()
-        print(out)
-        return out
-
-
-
-class UserConfigViewSet(viewsets.ModelViewSet):
-    serializer_class = UserProfileSerializer
-    queryset = User.objects.all()
