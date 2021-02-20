@@ -1,23 +1,16 @@
-from drfpasswordless.views import AbstractBaseObtainAuthToken
-from drfpasswordless.serializers import TokenResponseSerializer
-from rest_framework.permissions import AllowAny
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework.authentication import get_authorization_header
-from rest_framework.generics import (ListCreateAPIView,
-                                     RetrieveUpdateDestroyAPIView, )
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-
-from rest_framework import viewsets
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework.response import Response
+from drfpasswordless.serializers import TokenResponseSerializer
 from rest_framework import generics
-from .permissions import IsAuthReadOnly
-
-from .serializers import CallbackTokenAuthSerializer, UserProfileSerializer
-
+from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from .permissions import IsAuthReadOnly, IsStaffOnly
+from .serializers import CallbackTokenAuthSerializer, UserProfileSerializer
 
 User = get_user_model()
 
@@ -58,13 +51,13 @@ class ObtainToken(AbstractBaseObtainAuthToken):
 
 
 class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthReadOnly,)
     serializer_class = UserProfileSerializer
     lookup_field = 'email'
 
     def get_object(self):
-        email = self.request.data.get('email')
-        return get_object_or_404(User, email=email)
+        user = self.request.user
+        return get_object_or_404(User, username=user.username)
 
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
@@ -72,7 +65,6 @@ class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
-    permission_classes = (IsAuthReadOnly,)
+    permission_classes = (IsAuthReadOnly, IsStaffOnly,)
     queryset = User.objects.all()
     lookup_field = 'username'
-
