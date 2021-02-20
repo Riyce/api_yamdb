@@ -14,7 +14,7 @@ router = DefaultRouter()
 router.register(
     r'titles',
     TitleViewSet,
-    #basename='titles'
+    basename='Titles'
 )
 #router.register(
 #   r'titles/(?P<id>\d+)/reviews',
@@ -29,12 +29,12 @@ router.register(
 router.register(
     r'categories',
     CategoryViewSet,
-    #basename='categories'
+    basename='Categories'
 )
 router.register(
     r'genres',
     GenreViewSet,
-    #basename='genres'
+    basename='Genres'
 )
 
 urlpatterns = [
