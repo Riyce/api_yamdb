@@ -50,3 +50,12 @@ class User(AbstractBaseUser):
     def __str__(self):
         """ Строковое представление модели (отображается в консоли) """
         return self.email
+
+    def is_admin(self):
+        return self.role == self.Role.ADMIN
+
+    def is_moderator(self):
+        return self.role == self.Role.MODERATOR
+
+    def is_stuff(self):
+        return self.is_admin or self.is_moderator
