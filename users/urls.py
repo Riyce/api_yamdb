@@ -1,8 +1,8 @@
-from django.contrib import admin
-from rest_framework.routers import DefaultRouter
-from django.urls import path, include, re_path
-from .views import ObtainToken, UserViewSet, UserUpdateAPIView
+from django.urls import path, include
 from drfpasswordless.views import ObtainEmailCallbackToken
+from rest_framework.routers import DefaultRouter
+
+from .views import ObtainToken, UserViewSet, UserUpdateAPIView
 
 user_router = DefaultRouter()
 

@@ -1,7 +1,6 @@
-from django.db import models
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import BaseUserManager
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
@@ -17,7 +16,6 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        print(extra_fields)
         user = self.create_user(email, **extra_fields)
         user.role = 'admin'
         user.save(using=self._db)
@@ -58,5 +56,5 @@ class User(AbstractBaseUser):
     def is_moderator(self):
         return self.role == self.Role.MODERATOR
 
-    def is_stuff(self):
-        return self.is_admin or self.is_moderator
+    def is_staff(self):
+        return self.is_admin() or self.is_moderator()
