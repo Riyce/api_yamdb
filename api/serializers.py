@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Genre, Title
+from .models import Category, Genre, Review, Title
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -38,3 +38,35 @@ class TitleListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = ('id', 'name', 'year', 'genre', 'category', 'description', )
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username'
+    )
+
+    def validate(self, data):
+        #if Review.objects.filter(
+        #    title=self.context['view'].kwargs.get('title_id'),
+        #    author=self.context['request'].user
+        #).exists:
+        #    raise serializers.ValidationError(
+        #        'You have written review to this title.'
+        #    )
+        score = data['score']
+        if score <= 0 or score > 10:
+            raise serializers.ValidationError(
+                'Reiting must be from 1 to 10'
+            )
+        return data
+
+    class Meta:
+        fields = '__all__'
+        model = Review
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=['title', 'author']
+            )
+        ]        

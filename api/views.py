@@ -1,14 +1,18 @@
+from rest_framework import serializers
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin)
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from django.shortcuts import get_object_or_404
+from django.db import IntegrityError
 
-from .models import Category, Genre, Title
+from .models import Category, Genre, Title, Review
 from .permissions import IsAdminOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer,
-                          TitleCreateUpdateSerializer, TitleListSerializer)
+                          TitleCreateUpdateSerializer, TitleListSerializer,
+                          ReviewSerializer)
 from .service import TitleFilter
 
 
@@ -49,3 +53,17 @@ class TitleViewSet(ModelViewSet):
         if self.request.method == 'GET':
             return TitleListSerializer
         return TitleCreateUpdateSerializer
+
+
+class ReviewViewSet(ModelViewSet):
+    serializer_class = ReviewSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        return title.reviews.all()
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
