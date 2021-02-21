@@ -88,10 +88,10 @@ class Review(models.Model):
     def __str__(self):
         return self.name
 
-    #class Meta:
-    #    constraints = [
-    #        models.UniqueConstraint(
-    #            fields=['author', 'title'],
-    #            name='unique_follow',
-    #        )
-    #    ]
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique_review',
+            )
+        ]

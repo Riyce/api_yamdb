@@ -47,7 +47,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     def validate(self, data):
-        #if Review.objects.filter(
+        #Review.objects.filter(
         #    title=self.context['view'].kwargs.get('title_id'),
         #    author=self.context['request'].user
         #).exists:
@@ -67,3 +67,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Review
+        validators = [
+            validators.UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=['title', 'author']
+            )
+        ]

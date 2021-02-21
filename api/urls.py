@@ -14,12 +14,12 @@ router = DefaultRouter()
 router.register(
     r'titles',
     TitleViewSet,
-    basename='Titles'
+    basename='titles'
 )
 router.register(
     r'titles/(?P<title_id>\d+)/reviews',
     ReviewViewSet,
-    basename='Reviews'
+    basename='reviews'
 )
 #router.register(
 #    r'titles/(?P<id>\d+)/reviews/(?P<id>\d+)/comments',
@@ -34,7 +34,7 @@ router.register(
 router.register(
     r'genres',
     GenreViewSet,
-    basename='Genres'
+    basename='genres'
 )
 
 urlpatterns = [
