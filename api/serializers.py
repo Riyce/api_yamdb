@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework import serializers, validators
 
 from .models import Category, Genre, Review, Title
 
@@ -61,12 +61,9 @@ class ReviewSerializer(serializers.ModelSerializer):
             )
         return data
 
+    def create(self, validated_data):
+        return Review.objects.create(**validated_data)
+
     class Meta:
         fields = '__all__'
         model = Review
-        validators = [
-            serializers.UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=['title', 'author']
-            )
-        ]        
