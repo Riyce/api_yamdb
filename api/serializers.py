@@ -1,4 +1,4 @@
-from rest_framework import serializers, validators
+from rest_framework import serializers
 
 from .models import Category, Genre, Review, Title
 
@@ -28,16 +28,17 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'genre', 'category', 'description', )
+        fields = '__all__'
 
 
 class TitleListSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
+    rating = serializers.IntegerField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'genre', 'category', 'description', )
+        fields = '__all__'
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -47,13 +48,13 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     def validate(self, data):
-        #Review.objects.filter(
-        #    title=self.context['view'].kwargs.get('title_id'),
-        #    author=self.context['request'].user
-        #).exists:
-        #    raise serializers.ValidationError(
-        #        'You have written review to this title.'
-        #    )
+        if Review.objects.filter(
+            title=self.context['view'].kwargs.get('title_id'),
+            author=self.context['request'].user,
+        ).exists():
+            raise serializers.ValidationError(
+                'You have written review to this title.'
+            )
         score = data['score']
         if score <= 0 or score > 10:
             raise serializers.ValidationError(
@@ -61,15 +62,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             )
         return data
 
-    def create(self, validated_data):
-        return Review.objects.create(**validated_data)
-
     class Meta:
         fields = '__all__'
         model = Review
-        validators = [
-            validators.UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=['title', 'author']
-            )
-        ]

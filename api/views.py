@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from django.db.models import Avg
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin)
@@ -6,10 +6,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError
 
 from .models import Category, Genre, Title, Review
-from .permissions import IsAdminOrReadOnly
+from .permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrModeratorOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer,
                           TitleCreateUpdateSerializer, TitleListSerializer,
                           ReviewSerializer)
@@ -44,7 +43,6 @@ class CategoryViewSet(ListCreateDestroyViewSet):
 
 
 class TitleViewSet(ModelViewSet):
-    queryset = Title.objects.all()
     pagination_class = PageNumberPagination
     filterset_class = TitleFilter
     permission_classes = [IsAdminOrReadOnly]
@@ -54,11 +52,16 @@ class TitleViewSet(ModelViewSet):
             return TitleListSerializer
         return TitleCreateUpdateSerializer
 
+    def get_queryset(self):
+        return Title.objects.annotate(rating=Avg('reviews__score')).all()
+
 
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsAuthorOrAdminOrModeratorOrReadOnly
+    ]
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
