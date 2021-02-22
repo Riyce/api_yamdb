@@ -1,5 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.auth.models import BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -39,15 +38,12 @@ class User(AbstractBaseUser):
     email = models.EmailField(unique=True)
     role = models.TextField(choices=Role.choices, default='user')
     bio = models.TextField(verbose_name='О себе', null=True)
-
     objects = UserManager()
-
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
-        """ Строковое представление модели (отображается в консоли) """
         return self.email
 
     def is_admin(self):
@@ -58,3 +54,6 @@ class User(AbstractBaseUser):
 
     def is_staff(self):
         return self.is_admin() or self.is_moderator()
+
+    class Meta:
+        ordering = ['-id']

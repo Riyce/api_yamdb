@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Genre, Title
+from .models import Category, Comment, Genre, Review, Title
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -28,13 +28,56 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'genre', 'category', 'description', )
+        fields = '__all__'
 
 
 class TitleListSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
+    rating = serializers.IntegerField()
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'genre', 'category', 'description', )
+        fields = '__all__'
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+    )
+    title = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='name'
+    )
+
+    def validate(self, data):
+        if self.context['request'].method == 'POST':
+            if Review.objects.filter(
+                title=self.context['view'].kwargs.get('title_id'),
+                author=self.context['request']._user,
+            ).exists():
+                raise serializers.ValidationError(
+                    'You can write only one review to this title.'
+                )
+        score = data['score']
+        if score <= 0 or score > 10:
+            raise serializers.ValidationError(
+                'Reiting must be from 1 to 10.'
+            )
+        return data
+
+    class Meta:
+        fields = '__all__'
+        model = Review
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='username',
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = Comment
