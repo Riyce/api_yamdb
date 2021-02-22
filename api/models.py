@@ -86,7 +86,7 @@ class Review(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.text[:20]
 
     class Meta:
         constraints = [
