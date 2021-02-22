@@ -45,21 +45,25 @@ class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username',
-        default=serializers.CurrentUserDefault()
+    )
+    title = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field='name'
     )
 
     def validate(self, data):
-        if Review.objects.filter(
-            title=self.context['view'].kwargs.get('title_id'),
-            author=self.context['request'].user,
-        ).exists():
-            raise serializers.ValidationError(
-                'You have written review to this title.'
-            )
+        if self.context['request'].method == 'POST':
+            if Review.objects.filter(
+                title=self.context['view'].kwargs.get('title_id'),
+                author=self.context['request']._user,
+            ).exists():
+                raise serializers.ValidationError(
+                    'You can write only one review to this title.'
+                )
         score = data['score']
         if score <= 0 or score > 10:
             raise serializers.ValidationError(
-                'Reiting must be from 1 to 10'
+                'Reiting must be from 1 to 10.'
             )
         return data
 
