@@ -1,17 +1,18 @@
 from django.db.models import Avg
+from django.shortcuts import get_object_or_404
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin)
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
-from django.shortcuts import get_object_or_404
 
-from .models import Category, Genre, Title, Review
-from .permissions import IsAdminOrReadOnly, IsAuthorOrAdminOrModeratorOrReadOnly
-from .serializers import (CategorySerializer, GenreSerializer,
-                          TitleCreateUpdateSerializer, TitleListSerializer,
-                          ReviewSerializer, CommentSerializer)
+from .models import Category, Genre, Review, Title
+from .permissions import (IsAdminOrReadOnly,
+                          IsAuthorOrAdminOrModeratorOrReadOnly)
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          TitleCreateUpdateSerializer, TitleListSerializer)
 from .service import TitleFilter
 
 
@@ -53,7 +54,9 @@ class TitleViewSet(ModelViewSet):
         return TitleCreateUpdateSerializer
 
     def get_queryset(self):
-        return Title.objects.annotate(rating=Avg('reviews__score')).all()
+        return Title.objects.annotate(
+            rating=Avg('reviews__score')
+        ).all().order_by('-id')
 
 
 class ReviewViewSet(ModelViewSet):

@@ -1,8 +1,8 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from drfpasswordless.models import CallbackToken
 from drfpasswordless.serializers import TokenField
 from drfpasswordless.settings import api_settings
-from drfpasswordless.utils import verify_user_alias, validate_token_age
+from drfpasswordless.utils import validate_token_age, verify_user_alias
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -10,10 +10,6 @@ from .models import User
 
 
 def token_age_validator(value):
-    """
-    Check token age
-    Makes sure a token is within the proper expiration datetime window.
-    """
     valid_token = validate_token_age(value)
     if not valid_token:
         raise serializers.ValidationError("The token you entered isn't valid.")
@@ -21,13 +17,7 @@ def token_age_validator(value):
 
 
 class AbstractBaseCallbackTokenSerializer(serializers.Serializer):
-    """
-    Abstract class inspired by DRF's own token serializer.
-    Returns a user if valid, None or a message if not.
-    """
-
-    email = serializers.EmailField(
-        required=False)  # Needs to be required=false to require both.
+    email = serializers.EmailField(required=False)
     confirmation_code = TokenField(min_length=6, max_length=6,
                                    validators=[token_age_validator])
 
@@ -41,9 +31,7 @@ class AbstractBaseCallbackTokenSerializer(serializers.Serializer):
 
 
 class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
-
     def validate(self, attrs):
-        # Check Aliases
         try:
             alias_type, alias = self.validate_alias(attrs)
             callback_token = attrs.get('confirmation_code', None)
@@ -55,24 +43,18 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
                                                  'is_active': True})
 
             if token.user == user:
-                # Check the token type for our uni-auth method.
-                # authenticates and checks the expiry of the callback token.
                 if not user.is_active:
                     msg = _('User account is disabled.')
                     raise serializers.ValidationError(msg)
 
                 if api_settings.PASSWORDLESS_USER_MARK_EMAIL_VERIFIED:
-                    # Mark this alias as verified
                     user = User.objects.get(pk=token.user.pk)
                     success = verify_user_alias(user, token)
-
                     if success is False:
                         msg = _('Error validating user alias.')
                         raise serializers.ValidationError(msg)
-
                 attrs['user'] = user
                 return attrs
-
             else:
                 msg = _('Invalid Token')
                 raise serializers.ValidationError(msg)
@@ -88,7 +70,6 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         exclude = ('password',)

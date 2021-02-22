@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from drfpasswordless.serializers import TokenResponseSerializer
-from rest_framework import generics
-from rest_framework import status
-from rest_framework import viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -25,10 +23,6 @@ def get_tokens_for_user(user):
 
 
 class AbstractBaseObtainAuthToken(APIView):
-    """
-    This is a duplicate of rest_framework's own ObtainAuthToken method.
-    Instead, this returns an Auth Token based on our 6 digit callback token and source.
-    """
     serializer_class = None
 
     def post(self, request, *args, **kwargs):
@@ -36,13 +30,11 @@ class AbstractBaseObtainAuthToken(APIView):
         if serializer.is_valid(raise_exception=True):
             user = serializer.validated_data['user']
             token = get_tokens_for_user(user)
-            token_serializer = TokenResponseSerializer(data=token, partial=True)
-
+            token_serializer = TokenResponseSerializer(
+                data=token, partial=True
+            )
             if token_serializer.is_valid():
                 return Response(token, status=status.HTTP_200_OK)
-        # else:
-        #    logger.error("Couldn't log in unknown user. Errors on serializer: {}".format(serializer.error_messages))
-        # return Response({'detail': 'Couldn\'t log you in. Try again later.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ObtainToken(AbstractBaseObtainAuthToken):
