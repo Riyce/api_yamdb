@@ -95,3 +95,33 @@ class Review(models.Model):
                 name='unique_review',
             )
         ]
+
+
+class Comment(models.Model):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.SET_NULL,
+        verbose_name='id поста',
+        related_name='comments',
+        blank=True,
+        null=True,
+    )
+    text = models.CharField(
+        max_length=200,
+        verbose_name='Коментарий',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор поста (пользователь)',
+        related_name='comments',
+        blank=True,
+        null=True,
+    )
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата комментария',
+    )   
+
+    def __str__(self):
+        return self.text[:20]
