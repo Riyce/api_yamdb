@@ -56,7 +56,7 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
                     user = User.objects.get(pk=token.user.pk)
                     success = verify_user_alias(user, token)
 
-                    if success is False:
+                    if not success:
                         msg = _('Error validating user alias.')
                         raise serializers.ValidationError(msg)
 
