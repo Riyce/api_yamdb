@@ -6,21 +6,12 @@ from rest_framework import viewsets
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from .utils import get_tokens_for_user
 
 from .permissions import IsAuthReadOnly, IsStaffOnly
 from .serializers import CallbackTokenAuthSerializer, UserProfileSerializer
 
 User = get_user_model()
-
-
-def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
-
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }
 
 
 class AbstractBaseObtainAuthToken(APIView):
