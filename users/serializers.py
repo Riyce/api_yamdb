@@ -22,7 +22,7 @@ class AbstractBaseCallbackTokenSerializer(serializers.Serializer):
                                    validators=[token_age_validator])
 
     def validate_alias(self, attrs):
-        email = attrs.get('email', None)
+        email = attrs.get('email')
 
         if email:
             return 'email', email
@@ -36,7 +36,7 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
         # Check Aliases
         try:
             alias_type, alias = self.validate_alias(attrs)
-            callback_token = attrs.get('confirmation_code', None)
+            callback_token = attrs.get('confirmation_code')
             user = User.objects.get(**{alias_type + '__iexact': alias})
             token = CallbackToken.objects.get(**{'user': user,
                                                  'key': callback_token,
