@@ -1,4 +1,3 @@
-from django.utils.translation import ugettext_lazy as _
 from drfpasswordless.models import CallbackToken
 from drfpasswordless.serializers import TokenField
 from drfpasswordless.settings import api_settings
@@ -48,7 +47,7 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
                 # Check the token type for our uni-auth method.
                 # authenticates and checks the expiry of the callback token.
                 if not user.is_active:
-                    msg = _('User account is disabled.')
+                    msg = 'User account is disabled.'
                     raise serializers.ValidationError(msg)
 
                 if api_settings.PASSWORDLESS_USER_MARK_EMAIL_VERIFIED:
@@ -57,23 +56,23 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
                     success = verify_user_alias(user, token)
 
                     if not success:
-                        msg = _('Error validating user alias.')
+                        msg = 'Error validating user alias.'
                         raise serializers.ValidationError(msg)
 
                 attrs['user'] = user
                 return attrs
 
             else:
-                msg = _('Invalid Token')
+                msg = 'Invalid Token'
                 raise serializers.ValidationError(msg)
         except CallbackToken.DoesNotExist:
-            msg = _('Invalid alias parameters provided.')
+            msg = 'Invalid alias parameters provided.'
             raise serializers.ValidationError(msg)
         except User.DoesNotExist:
-            msg = _('Invalid user alias parameters provided.')
+            msg = 'Invalid user alias parameters provided.'
             raise serializers.ValidationError(msg)
         except ValidationError:
-            msg = _('Invalid alias parameters provided.')
+            msg = 'Invalid alias parameters provided.'
             raise serializers.ValidationError(msg)
 
 

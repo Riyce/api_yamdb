@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import BaseUserManager
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 
 class UserManager(BaseUserManager):
@@ -33,9 +32,9 @@ class User(AbstractBaseUser):
                                 verbose_name='Username',
                                 error_messages={
                                     'unique':
-                                        _("username already exists.")})
-    first_name = models.CharField(_('first name'), max_length=30, blank=True)
-    last_name = models.CharField(_('last name'), max_length=150, blank=True)
+                                        "username already exists."})
+    first_name = models.CharField('first name', max_length=30, blank=True)
+    last_name = models.CharField('last name', max_length=150, blank=True)
     email = models.EmailField(unique=True)
     role = models.TextField(choices=Role.choices, default='user')
     bio = models.TextField(verbose_name='О себе', null=True)
@@ -50,11 +49,14 @@ class User(AbstractBaseUser):
         """ Строковое представление модели (отображается в консоли) """
         return self.email
 
+    @property
     def is_admin(self):
         return self.role == self.Role.ADMIN
 
+    @property
     def is_moderator(self):
         return self.role == self.Role.MODERATOR
 
+    @property
     def is_staff(self):
-        return self.is_admin() or self.is_moderator()
+        return self.is_admin or self.is_moderator
