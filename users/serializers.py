@@ -1,23 +1,12 @@
-from django.utils.translation import ugettext_lazy as _
 from drfpasswordless.models import CallbackToken
 from drfpasswordless.serializers import TokenField
 from drfpasswordless.settings import api_settings
 from drfpasswordless.utils import verify_user_alias, validate_token_age
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from .validators import token_age_validator
 
 from .models import User
-
-
-def token_age_validator(value):
-    """
-    Check token age
-    Makes sure a token is within the proper expiration datetime window.
-    """
-    valid_token = validate_token_age(value)
-    if not valid_token:
-        raise serializers.ValidationError("The token you entered isn't valid.")
-    return value
 
 
 class AbstractBaseCallbackTokenSerializer(serializers.Serializer):
