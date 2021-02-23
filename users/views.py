@@ -33,16 +33,15 @@ class AbstractBaseObtainAuthToken(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            user = serializer.validated_data['user']
-            token = get_tokens_for_user(user)
-            token_serializer = TokenResponseSerializer(data=token, partial=True)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data.get('user')
+        token = get_tokens_for_user(user)
+        token_serializer = TokenResponseSerializer(data=token, partial=True)
 
-            if token_serializer.is_valid():
-                return Response(token, status=status.HTTP_200_OK)
-        # else:
-        #    logger.error("Couldn't log in unknown user. Errors on serializer: {}".format(serializer.error_messages))
-        # return Response({'detail': 'Couldn\'t log you in. Try again later.'}, status=status.HTTP_400_BAD_REQUEST)
+        if token_serializer.is_valid():
+            return Response(token, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Couldn\'t log you in. Try again later.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ObtainToken(AbstractBaseObtainAuthToken):
@@ -57,7 +56,7 @@ class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         user = self.request.user
-        return get_object_or_404(User, username=user.username)
+        return user
 
     def put(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
