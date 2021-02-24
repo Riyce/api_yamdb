@@ -1,51 +1,138 @@
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from users.models import User
+
+class UserManager(BaseUserManager):
+    use_in_migrations = True
+
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Email обязателен')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        user = self.create_user(email, **extra_fields)
+        user.role = 'admin'
+        user.save(using=self._db)
+        return user
+
+
+class User(AbstractBaseUser):
+    class Role(models.TextChoices):
+        USER = 'user'
+        MODERATOR = 'moderator'
+        ADMIN = 'admin'
+        DJANGO_ADMIN = 'django_admin'
+
+    username = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name='username',
+        error_messages={'unique': 'username already exists.'}
+    )
+    first_name = models.CharField(
+        verbose_name='first name',
+        max_length=30,
+        blank=True
+    )
+    last_name = models.CharField(
+        verbose_name='last name',
+        max_length=150,
+        blank=True
+    )
+    email = models.EmailField(verbose_name='email', unique=True)
+    role = models.TextField(
+        verbose_name='role',
+        choices=Role.choices,
+        default='user'
+    )
+    bio = models.TextField(verbose_name='about', null=True)
+
+    objects = UserManager()
+
+    EMAIL_FIELD = 'email'
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
+
+    def __str__(self):
+        return self.email
+
+    @property
+    def is_admin(self):
+        return self.role == self.Role.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == self.Role.MODERATOR
+
+    @property
+    def is_staff(self):
+        return self.is_admin or self.is_moderator
 
 
 class Genre(models.Model):
-    name = models.CharField(verbose_name='Genre', max_length=30, )
-    slug = models.SlugField(unique=True)
-
-    def __str__(self):
-        return self.slug
+    name = models.CharField(verbose_name='genre', max_length=30)
+    slug = models.SlugField(verbose_name='slug', unique=True)
 
     class Meta:
         ordering = ['-id']
+        verbose_name = 'Genre'
+        verbose_name_plural = 'Genres'
+
+    def __str__(self):
+        return self.slug
 
 
 class Category(models.Model):
-    name = models.CharField(verbose_name='Category', max_length=50, )
-    slug = models.SlugField(unique=True)
+    name = models.CharField(verbose_name='category', max_length=50)
+    slug = models.SlugField(verbose_name='slug', unique=True)
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
 
     def __str__(self):
         return self.slug
 
-    class Meta:
-        ordering = ['-id']
-
 
 class Title(models.Model):
-    name = models.CharField(verbose_name='Name', max_length=200, )
-    year = models.IntegerField(verbose_name='Release date')
+    name = models.CharField(verbose_name='name', max_length=200)
+    year = models.IntegerField(
+        verbose_name='release date',
+    )
     category = models.ForeignKey(
         Category,
-        verbose_name='Category',
+        verbose_name='category',
         on_delete=models.SET_NULL,
         related_name='titles',
         null=True,
-        blank=True,
+        blank=True
     )
     genre = models.ManyToManyField(
         Genre,
-        verbose_name='Genre',
-        related_name='titles',
+        verbose_name='genre',
+        related_name='titles'
     )
     description = models.TextField(
-        verbose_name='Description',
+        verbose_name='description',
         blank=True,
-        null=True,
+        null=True
     )
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'Title'
+        verbose_name_plural = 'Titles'
 
     def __str__(self):
         return self.name
@@ -55,31 +142,37 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        verbose_name='Title',
+        verbose_name='title',
         related_name='reviews',
         blank=True,
-        null=True,
+        null=True
     )
     text = models.CharField(max_length=200, verbose_name='Text', )
-    score = models.IntegerField(verbose_name='Rating', )
+    score = models.IntegerField(
+        verbose_name='rating',
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(10)
+        ]
+    )
     pub_date = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Publication date',
+        verbose_name='publication date',
+        db_index=True
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Author',
+        verbose_name='author',
         related_name='reviews',
         blank=True,
-        null=True,
+        null=True
     )
-
-    def __str__(self):
-        return self.text[:20]
 
     class Meta:
         ordering = ['-pub_date']
+        verbose_name = 'review'
+        verbose_name_plural = 'Reviews'
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'title'],
@@ -87,35 +180,41 @@ class Review(models.Model):
             )
         ]
 
+    def __str__(self):
+        return self.text[:20]
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
         Review,
         on_delete=models.SET_NULL,
-        verbose_name='Review',
+        verbose_name='review',
         related_name='comments',
         blank=True,
-        null=True,
+        null=True
     )
     text = models.CharField(
         max_length=200,
-        verbose_name='Text',
+        verbose_name='text'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Author',
+        verbose_name='author',
         related_name='comments',
         blank=True,
-        null=True,
+        null=True
     )
     pub_date = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Publication date',
+        verbose_name='publication date',
+        db_index=True
     )
-
-    def __str__(self):
-        return self.text[:20]
 
     class Meta:
         ordering = ['-pub_date']
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'
+
+    def __str__(self):
+        return self.text[:20]

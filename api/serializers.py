@@ -1,18 +1,88 @@
-from rest_framework import serializers
+import datetime as dt
 
-from .models import Category, Comment, Genre, Review, Title
+from drfpasswordless.models import CallbackToken
+from drfpasswordless.serializers import TokenField
+from drfpasswordless.settings import api_settings
+from drfpasswordless.utils import verify_user_alias
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+from .models import Category, Comment, Genre, Review, Title, User
+from .validators import token_age_validator
+
+
+class AbstractBaseCallbackTokenSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
+    confirmation_code = TokenField(
+        min_length=6,
+        max_length=6,
+        validators=[token_age_validator]
+    )
+
+    def validate_alias(self, attrs):
+        email = attrs.get('email')
+        if email:
+            return 'email', email
+        return None
+
+
+class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
+    def validate(self, attrs):
+
+        try:
+            alias_type, alias = self.validate_alias(attrs)
+            callback_token = attrs.get('confirmation_code')
+            user = User.objects.get(**{alias_type + '__iexact': alias})
+            token = CallbackToken.objects.get(
+                **{
+                    'user': user,
+                    'key': callback_token,
+                    'type': CallbackToken.TOKEN_TYPE_AUTH,
+                    'is_active': True
+                }
+            )
+            if token.user == user:
+                if not user.is_active:
+                    msg = 'User account is disabled.'
+                    raise serializers.ValidationError(msg)
+                if api_settings.PASSWORDLESS_USER_MARK_EMAIL_VERIFIED:
+                    user = User.objects.get(pk=token.user.pk)
+                    success = verify_user_alias(user, token)
+                    if not success:
+                        msg = 'Error validating user alias.'
+                        raise serializers.ValidationError(msg)
+                attrs['user'] = user
+                return attrs
+            else:
+                msg = 'Invalid Token'
+                raise serializers.ValidationError(msg)
+        except CallbackToken.DoesNotExist:
+            msg = 'Invalid alias parameters provided.'
+            raise serializers.ValidationError(msg)
+        except User.DoesNotExist:
+            msg = 'Invalid user alias parameters provided.'
+            raise serializers.ValidationError(msg)
+        except ValidationError:
+            msg = 'Invalid alias parameters provided.'
+            raise serializers.ValidationError(msg)
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ('password',)
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ('name', 'slug')
+        exclude = ('id', )
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ('name', 'slug')
+        exclude = ('id', )
 
 
 class TitleCreateUpdateSerializer(serializers.ModelSerializer):
@@ -25,6 +95,13 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
         slug_field='slug',
     )
+
+    def validate(self, data):
+        if data.get('year') and data.get('year') > dt.datetime.now().year:
+            raise serializers.ValidationError(
+                'It is not a correcrt year.'
+            )
+        return data
 
     class Meta:
         model = Title
@@ -60,11 +137,6 @@ class ReviewSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'You can write only one review to this title.'
                 )
-        score = data['score']
-        if score <= 0 or score > 10:
-            raise serializers.ValidationError(
-                'Reiting must be from 1 to 10.'
-            )
         return data
 
     class Meta:
