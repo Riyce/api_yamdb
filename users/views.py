@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .utils import get_tokens_for_user
+from rest_framework.decorators import action
 
 from .permissions import IsAuthReadOnly, IsStaffOnly
 from .serializers import CallbackTokenAuthSerializer, UserProfileSerializer
@@ -15,10 +16,7 @@ User = get_user_model()
 
 
 class AbstractBaseObtainAuthToken(APIView):
-    """
-    This is a duplicate of rest_framework's own ObtainAuthToken method.
-    Instead, this returns an Auth Token based on our 6 digit callback token and source.
-    """
+
     serializer_class = None
 
     def post(self, request, *args, **kwargs):
@@ -31,7 +29,8 @@ class AbstractBaseObtainAuthToken(APIView):
         if token_serializer.is_valid():
             return Response(token, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Couldn\'t log you in. Try again later.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail':'Couldn"t log you in. Try again later.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ObtainToken(AbstractBaseObtainAuthToken):
@@ -39,21 +38,19 @@ class ObtainToken(AbstractBaseObtainAuthToken):
     serializer_class = CallbackTokenAuthSerializer
 
 
-class UserUpdateAPIView(generics.RetrieveUpdateAPIView):
-    permission_classes = (IsAuthReadOnly,)
-    serializer_class = UserProfileSerializer
-    lookup_field = 'email'
-
-    def get_object(self):
-        user = self.request.user
-        return user
-
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = (IsAuthReadOnly, IsStaffOnly,)
     queryset = User.objects.all()
     lookup_field = 'username'
+
+    @action(detail=False, methods=['GET', 'PATCH'],
+            permission_classes=(IsAuthReadOnly,))
+    def me(self, request):
+        user = User.objects.get(username=request.user.username)
+        serializer = UserProfileSerializer(user, data=request.data,
+                                           partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
