@@ -47,10 +47,9 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET', 'PATCH'],
             permission_classes=(IsAuthReadOnly,))
     def me(self, request):
-        user = User.objects.get(username=request.user.username)
+        user = request.user
         serializer = UserProfileSerializer(user, data=request.data,
                                            partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
