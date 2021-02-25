@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from django.db import models
 
@@ -21,20 +21,13 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser):
+class User(AbstractUser):
     class Role(models.TextChoices):
         USER = 'user'
         MODERATOR = 'moderator'
         ADMIN = 'admin'
         DJANGO_ADMIN = 'django_admin'
 
-    username = models.CharField(max_length=30, unique=True,
-                                verbose_name='Username',
-                                error_messages={
-                                    'unique':
-                                        "username already exists."})
-    first_name = models.CharField('first name', max_length=30, blank=True)
-    last_name = models.CharField('last name', max_length=150, blank=True)
     email = models.EmailField(unique=True)
     role = models.TextField(choices=Role.choices, default='user')
     bio = models.TextField(verbose_name='О себе', null=True)
