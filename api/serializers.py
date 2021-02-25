@@ -1,14 +1,11 @@
-import datetime as dt
-
 from drfpasswordless.models import CallbackToken
-from drfpasswordless.serializers import TokenField
+from drfpasswordless.serializers import TokenField, token_age_validator
 from drfpasswordless.settings import api_settings
 from drfpasswordless.utils import verify_user_alias
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from .models import Category, Comment, Genre, Review, Title, User
-from .validators import token_age_validator
 
 
 class AbstractBaseCallbackTokenSerializer(serializers.Serializer):
@@ -70,7 +67,14 @@ class CallbackTokenAuthSerializer(AbstractBaseCallbackTokenSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ('password',)
+        fields = (
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'role',
+            'bio'
+        )
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -95,13 +99,6 @@ class TitleCreateUpdateSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(),
         slug_field='slug',
     )
-
-    def validate(self, data):
-        if data.get('year') and data.get('year') > dt.datetime.now().year:
-            raise serializers.ValidationError(
-                'It is not a correcrt year.'
-            )
-        return data
 
     class Meta:
         model = Title

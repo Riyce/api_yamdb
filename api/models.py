@@ -1,35 +1,18 @@
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from .managers import UserManager
+from .validators import year_validator
 
-#from .validators import year_validator
 
-
-class User(AbstractBaseUser):
+class User(AbstractUser):
     class Role(models.TextChoices):
         USER = 'user'
         MODERATOR = 'moderator'
         ADMIN = 'admin'
         DJANGO_ADMIN = 'django_admin'
 
-    username = models.CharField(
-        max_length=30,
-        unique=True,
-        verbose_name='username',
-        error_messages={'unique': 'Username already exists.'}
-    )
-    first_name = models.CharField(
-        verbose_name='first name',
-        max_length=30,
-        blank=True
-    )
-    last_name = models.CharField(
-        verbose_name='last name',
-        max_length=150,
-        blank=True
-    )
     email = models.EmailField(verbose_name='email', unique=True)
     role = models.TextField(
         verbose_name='role',
@@ -95,7 +78,7 @@ class Title(models.Model):
     name = models.CharField(verbose_name='name', max_length=200)
     year = models.IntegerField(
         verbose_name='release date',
-        #validators=[year_validator]
+        validators=[year_validator]
     )
     category = models.ForeignKey(
         Category,
