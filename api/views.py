@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
+from .filters import TitleFilter
 from .models import Category, Genre, Review, Title, User
 from .permissions import (
     IsAdminOrReadOnly, IsAuthorOrAdminOrModeratorOrReadOnly, IsAuthReadOnly,
@@ -20,7 +21,7 @@ from .serializers import (
     CallbackTokenAuthSerializer, CategorySerializer, CommentSerializer,
     GenreSerializer, ReviewSerializer, TitleCreateUpdateSerializer,
     TitleListSerializer, UserProfileSerializer)
-from .service import TitleFilter, get_tokens_for_user
+from .utils import get_tokens_for_user
 
 
 class AbstractBaseObtainAuthToken(APIView):
@@ -56,13 +57,14 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['GET', 'PATCH'],
             permission_classes=(IsAuthReadOnly,))
     def me(self, request):
-        user = User.objects.get(username=request.user.username)
-        serializer = UserProfileSerializer(user, data=request.data,
-                                           partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors)
+        serializer = UserProfileSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class ListCreateDestroyViewSet(CreateModelMixin,

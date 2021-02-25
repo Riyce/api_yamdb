@@ -1,24 +1,10 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from .managers import UserManager
 
-class UserManager(BaseUserManager):
-    use_in_migrations = True
-
-    def create_user(self, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError('Email обязателен')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, password=None, **extra_fields):
-        user = self.create_user(email, **extra_fields)
-        user.role = 'admin'
-        user.save(using=self._db)
-        return user
+#from .validators import year_validator
 
 
 class User(AbstractBaseUser):
@@ -32,7 +18,7 @@ class User(AbstractBaseUser):
         max_length=30,
         unique=True,
         verbose_name='username',
-        error_messages={'unique': 'username already exists.'}
+        error_messages={'unique': 'Username already exists.'}
     )
     first_name = models.CharField(
         verbose_name='first name',
@@ -109,6 +95,7 @@ class Title(models.Model):
     name = models.CharField(verbose_name='name', max_length=200)
     year = models.IntegerField(
         verbose_name='release date',
+        #validators=[year_validator]
     )
     category = models.ForeignKey(
         Category,

@@ -36,7 +36,7 @@ class TitleAdmin(admin.ModelAdmin):
     empty_value_display = 'No data'
 
     def genre_list(self, obj):
-        return '\n'.join([genre.name for genre in obj.genre.all()])
+        return obj.values_list('genre__name', flat=True)
 
 
 class UserAdmin(admin.ModelAdmin):
